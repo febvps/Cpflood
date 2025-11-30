@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Client</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            color: #667eea;
+        }
+
+        h2 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: #a0a0ff;
+            border-bottom: 1px solid #3a3a5a;
+            padding-bottom: 6px;
+        }
+
+        .section {
+            background: rgba(30, 30, 60, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #3a3a5a;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #aaa;
+            font-size: 0.85rem;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #3a3a5a;
+            border-radius: 6px;
+            background: #0f0f23;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        input[type="number"] {
+            width: 120px;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 50px;
+            font-family: inherit;
+        }
+
+        textarea.large {
+            min-height: 100px;
+        }
+
+        .hint {
+            font-size: 0.7rem;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 90px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            flex: none;
+        }
+
+        .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+        .btn-success { background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff; }
+        .btn-danger { background: linear-gradient(135deg, #eb3349, #f45c43); color: #fff; }
+        .btn-warning { background: linear-gradient(135deg, #f093fb, #f5576c); color: #fff; }
+        .btn-secondary { background: #3a3a5a; color: #ccc; }
+        .btn-cyan { background: linear-gradient(135deg, #00d2ff, #3a7bd5); color: #fff; }
+        .btn-orange { background: linear-gradient(135deg, #f5af19, #f12711); color: #fff; }
+
+        .status {
+            margin-top: 12px;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.15);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .status strong {
+            color: #38ef7d;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .tag {
+            background: rgba(56, 239, 125, 0.2);
+            border: 1px solid #38ef7d;
+            color: #38ef7d;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        .tag.connecting { background: rgba(255, 193, 7, 0.2); border-color: #ffc107; color: #ffc107; }
+        .tag.failed { background: rgba(235, 51, 73, 0.2); border-color: #eb3349; color: #eb3349; }
+        .tag.banned { background: rgba(139, 0, 0, 0.3); border-color: #8b0000; color: #ff6b6b; }
+        .tag.in-room { background: rgba(56, 239, 125, 0.35); }
+
+        .log {
+            height: 180px;
+            overflow-y: auto;
+            background: #0a0a15;
+            border-radius: 6px;
+            padding: 10px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.72rem;
+            border: 1px solid #3a3a5a;
+        }
+
+        .log p {
+            margin-bottom: 3px;
+            padding: 3px 6px;
+            border-radius: 3px;
+            word-break: break-all;
+        }
+
+        .log .success { background: rgba(56, 239, 125, 0.1); color: #38ef7d; }
+        .log .error { background: rgba(235, 51, 73, 0.1); color: #eb3349; }
+        .log .info { background: rgba(102, 126, 234, 0.1); color: #a0a0ff; }
+        .log .warning { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
+        .log .ban { background: rgba(139, 0, 0, 0.2); color: #ff6b6b; }
+        .log .dm { background: rgba(0, 210, 255, 0.1); color: #00d2ff; }
+        .log .raw { background: rgba(80, 80, 80, 0.15); color: #777; font-size: 0.68rem; }
+
+        .chat {
+            height: 150px;
+            overflow-y: auto;
+            background: #0a0a15;
+            border-radius: 6px;
+            padding: 10px;
+            border: 1px solid #3a3a5a;
+        }
+
+        .msg {
+            padding: 8px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            background: rgba(102, 126, 234, 0.1);
+            border-left: 3px solid #667eea;
+        }
+
+        .msg.own { background: rgba(56, 239, 125, 0.1); border-left-color: #38ef7d; }
+        .msg.dm { background: rgba(0, 210, 255, 0.1); border-left-color: #00d2ff; }
+
+        .msg .from { font-weight: 600; color: #667eea; font-size: 0.8rem; }
+        .msg.own .from { color: #38ef7d; }
+        .msg.dm .from { color: #00d2ff; }
+        .msg .text { margin-top: 4px; font-size: 0.85rem; }
+        .msg .time { font-size: 0.65rem; color: #555; text-align: right; }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 12px;
+        }
+
+        .tab {
+            padding: 8px 14px;
+            background: #3a3a5a;
+            border: none;
+            border-radius: 6px 6px 0 0;
+            color: #777;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .tab.active {
+            background: rgba(102, 126, 234, 0.3);
+            color: #fff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .user-list {
+            max-height: 150px;
+            overflow-y: auto;
+            background: #0a0a15;
+            border: 1px solid #3a3a5a;
+            border-radius: 6px;
+            padding: 8px;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            padding: 5px 8px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 4px;
+            margin-bottom: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .user-item:hover {
+            background: rgba(102, 126, 234, 0.25);
+        }
+
+        .user-item input {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .user-item.selected {
+            background: rgba(56, 239, 125, 0.2);
+            border: 1px solid #38ef7d;
+        }
+
+        .indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .indicator.on { background: #38ef7d; }
+        .indicator.off { background: #eb3349; }
+
+        .hidden { display: none !important; }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #1a1a2e; }
+        ::-webkit-scrollbar-thumb { background: #3a3a5a; border-radius: 3px; }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .sending { animation: pulse 1s infinite; }
+
+        @media (max-width: 600px) {
+            .form-row { flex-direction: column; }
+            .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💬 Chat Client</h1>
+
+        <!-- Settings -->
+        <div class="section">
+            <h2>⚙️ Settings</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Server URL:</label>
+                    <input type="text" id="serverUrl" value="wss://chatp.net:5333/server">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label><input type="checkbox" id="debugMode" checked> Debug Mode</label>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="autoDevice" checked> Auto-change Device on Ban</label>
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button id="btnBg" class="btn btn-success btn-sm">🔋 Background</button>
+                <button id="btnIP" class="btn btn-secondary btn-sm">Check IP</button>
+            </div>
+
+            <div id="bgStatus" class="status hidden">
+                <span><span class="indicator on"></span> Background Active</span>
+                <span id="lastPing">--</span>
+            </div>
+        </div>
+
+        <!-- Connect -->
+        <div class="section">
+            <h2>1. Connect IDs</h2>
+            
+            <div class="form-group">
+                <label>IDs (# separated):</label>
+                <textarea id="inputIds" placeholder="id1#id2#id3" rows="2"></textarea>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="inputPass">
+                </div>
+                <div class="form-group">
+                    <label>Delay (ms):</label>
+                    <input type="number" id="connDelay" value="2000">
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button id="btnConnect" class="btn btn-primary">Connect</button>
+                <button id="btnDisconnect" class="btn btn-danger" disabled>Disconnect</button>
+            </div>
+
+            <div class="status">
+                <span><span class="indicator off" id="connInd"></span> Connected: <strong id="connCnt">0</strong></span>
+                <span>In Room: <strong id="roomCnt">0</strong></span>
+            </div>
+            
+            <div class="tags" id="idTags"></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="section">
+            <div class="tabs">
+                <button class="tab active" data-tab="roomTab">📢 Room</button>
+                <button class="tab" data-tab="dmTab">💬 Direct Messages</button>
+            </div>
+
+            <!-- Room Tab -->
+            <div id="roomTab" class="tab-content active">
+                <h2>2. Room</h2>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Room Name:</label>
+                        <input type="text" id="roomName" placeholder="Enter room name">
+                    </div>
+                    <div class="form-group">
+                        <label>Join Delay (ms):</label>
+                        <input type="number" id="joinDelay" value="5000">
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button id="btnFetchRooms" class="btn btn-secondary btn-sm" disabled>Fetch Rooms</button>
+                    <button id="btnJoin" class="btn btn-primary" disabled>Join</button>
+                    <button id="btnStopJoin" class="btn btn-orange hidden">Stop</button>
+                    <button id="btnLeave" class="btn btn-warning" disabled>Leave</button>
+                </div>
+
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>Rooms Found:</label>
+                    <select id="roomSelect" size="3">
+                        <option disabled>Click Fetch Rooms</option>
+                    </select>
+                </div>
+
+                <div id="roomStatus" class="status hidden">
+                    <span>Room: <strong id="curRoom"></strong></span>
+                    <span>In Room: <strong id="inRoomCnt">0</strong></span>
+                </div>
+
+                <div id="joinProg" class="log hidden" style="height: 80px; margin-top: 8px;"></div>
+
+                <!-- Room Messages -->
+                <div class="form-group" style="margin-top: 12px;">
+                    <label>Messages (one per line):</label>
+                    <textarea id="roomMsgs" class="large" placeholder="Message 1&#10;Message 2"></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Interval (ms):</label>
+                        <input type="number" id="msgInt" value="3000">
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button id="btnStartMsg" class="btn btn-success" disabled>Start</button>
+                    <button id="btnStopMsg" class="btn btn-danger" disabled>Stop</button>
+                </div>
+
+                <div id="msgStatus" class="status hidden">
+                    <span id="msgLoop">Sending...</span>
+                    <span>Sent: <strong id="msgCnt">0</strong></span>
+                </div>
+            </div>
+
+            <!-- DM Tab -->
+            <div id="dmTab" class="tab-content">
+                <h2>2. Direct Messages</h2>
+                
+                <div class="form-group">
+                    <label>Enter Target Users (one per line or # separated):</label>
+                    <textarea id="dmInput" placeholder="user1&#10;user2&#10;user3" rows="3"></textarea>
+                </div>
+
+                <div class="btn-row">
+                    <button id="btnFetchUsers" class="btn btn-secondary btn-sm" disabled>Fetch from Room</button>
+                    <button id="btnAddTargets" class="btn btn-primary btn-sm">Add to List</button>
+                    <button id="btnClearTargets" class="btn btn-secondary btn-sm">Clear</button>
+                    <button id="btnSelectAll" class="btn btn-secondary btn-sm">Select All</button>
+                </div>
+
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>Target Users - Check to Select (<span id="selectedCnt">0</span> selected / <span id="totalCnt">0</span> total):</label>
+                    <div class="user-list" id="userList">
+                        <p style="color: #555; text-align: center; font-size: 0.8rem;">No users added</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Message to Send:</label>
+                    <textarea id="dmMsg" class="large" placeholder="Your message..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Delay between DMs (ms):</label>
+                        <input type="number" id="dmDelay" value="2000">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="dmLoop"> Loop Messages
+                        </label>
+                        <div class="hint">If checked, will keep sending to selected users</div>
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button id="btnSendDM" class="btn btn-cyan" disabled>📨 Send to Selected</button>
+                    <button id="btnStopDM" class="btn btn-danger hidden">Stop</button>
+                </div>
+
+                <div id="dmStatus" class="status hidden">
+                    <span id="dmLoop2">Sending...</span>
+                    <span>Sent: <strong id="dmCnt">0</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat -->
+        <div class="section">
+            <h2>3. Messages</h2>
+            <div class="chat" id="chatBox">
+                <p style="color: #555; text-align: center; font-size: 0.8rem;">Messages appear here...</p>
+            </div>
+        </div>
+
+        <!-- Log -->
+        <div class="section">
+            <h2>📋 Log</h2>
+            <div class="log" id="logBox">
+                <p class="info">Ready...</p>
+            </div>
+            <div class="btn-row">
+                <button id="btnClear" class="btn btn-secondary btn-sm">Clear</button>
+                <button id="btnExport" class="btn btn-secondary btn-sm">Export</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== DEVICE GENERATOR ==========
+        const Device = {
+            brands: ['Samsung','Google','OnePlus','Xiaomi','Huawei','Oppo','Vivo','Realme','Motorola','Nokia','Sony','Honor','Poco','Nothing','Tecno','Infinix','Redmi','Asus','ZTE','LG'],
+            models: {
+                'Samsung': ['Galaxy S21','Galaxy S22','Galaxy S23','Galaxy A52','Galaxy A53','Galaxy Note20','Galaxy Z Flip4'],
+                'Google': ['Pixel 4','Pixel 5','Pixel 6','Pixel 7','Pixel 8'],
+                'OnePlus': ['9 Pro','10 Pro','11','Nord 2','Nord CE 3'],
+                'Xiaomi': ['Mi 11','Mi 12','Redmi Note 11','Redmi Note 12','Poco F4'],
+                'default': ['Pro','Ultra','Max','Lite','Plus']
+            },
+            sdks: [28,29,30,31,32,33,34],
+            
+            gen() {
+                const b = this.brands[Math.floor(Math.random() * this.brands.length)];
+                const m = (this.models[b] || this.models['default'])[Math.floor(Math.random() * (this.models[b] || this.models['default']).length)];
+                const s = this.sdks[Math.floor(Math.random() * this.sdks.length)];
+                const n = Math.floor(Math.random() * 900) + 100;
+                return { brand: b, model: m, sdk: s, id: `${n}-${b}-${m.replace(/\s/g,'_')}-${s}` };
+            }
+        };
+
+        // ========== KEEP ALIVE ==========
+        class KeepAlive {
+            constructor() { this.active = false; this.int = null; }
+            start(cb) {
+                if (this.active) return true;
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    osc.frequency.value = 1;
+                    g.gain.value = 0.001;
+                    osc.connect(g);
+                    g.connect(ctx.destination);
+                    osc.start();
+                    this.int = setInterval(cb, 10000);
+                    this.active = true;
+                    return true;
+                } catch(e) { return false; }
+            }
+        }
+
+        // ========== CLIENT ==========
+        class Client {
+            constructor(user, pass, url, cb, dev) {
+                this.url = url;
+                this.user = user;
+                this.pass = pass;
+                this.dev = dev || Device.gen();
+                this.ws = null;
+                this.connected = false;
+                this.inRoom = false;
+                this.joinOk = false;
+                this.banned = false;
+                this.room = '';
+                this.target = '';
+                this.users = [];
+                this.ping = null;
+                this.manual = false;
+                this.cb = cb;
+                this.connect();
+            }
+            
+            connect() {
+                try {
+                    if (this.ws) try { this.ws.close(); } catch(e) {}
+                    this.ws = new WebSocket(this.url);
+                    this.ws.onopen = () => this._open();
+                    this.ws.onclose = () => this._close();
+                    this.ws.onmessage = e => this._msg(e);
+                    this.ws.onerror = () => {};
+                } catch(e) {}
+            }
+            
+            disconnect() {
+                this.manual = true;
+                this.connected = false;
+                this.inRoom = false;
+                if (this.ping) clearInterval(this.ping);
+                if (this.ws) try { this.ws.close(); } catch(e) {}
+            }
+            
+            newDev() {
+                this.dev = Device.gen();
+                this.banned = false;
+                return this.dev;
+            }
+            
+            _open() {
+                this.cb.log?.(`[${this.user}] Connected`);
+                this._login();
+            }
+            
+            _close() {
+                this.connected = false;
+                this.inRoom = false;
+                if (this.ping) clearInterval(this.ping);
+                this.cb.log?.(`[${this.user}] Disconnected`);
+                this.cb.dc?.(this.manual);
+            }
+            
+            _msg(e) {
+                const raw = e.data;
+                if (!raw) return;
+                this.cb.raw?.(this.user, raw);
+                try { this._handle(JSON.parse(raw)); } catch(err) {}
+            }
+            
+            _handle(d) {
+                const h = d.handler, t = d.type;
+                
+                // Login
+                if (h === 'login_event') {
+                    if (t === 'success') {
+                        this.connected = true;
+                        this._startPing();
+                        this.cb.log?.(`[${this.user}] ✓ Logged in`);
+                        this.cb.login?.();
+                    } else {
+                        this.cb.log?.(`[${this.user}] ✗ Login failed: ${d.reason || t}`);
+                        this.cb.fail?.(d.reason);
+                    }
+                }
+                
+                // Room list - catch ALL variations
+                if (h === 'room_list' || h === 'rooms' || h === 'conference_list' || h === 'conferences' ||
+                    h === 'group_list' || h === 'groups' || h === 'public_rooms' || h === 'chatrooms' ||
+                    h === 'muc_list' || h === 'channels' || d.rooms || d.conferences || d.groups || d.channels) {
+                    const list = d.rooms || d.conferences || d.groups || d.channels || d.list || d.items || [];
+                    if (list.length > 0) {
+                        this.cb.log?.(`[${this.user}] Found ${list.length} rooms`);
+                        this.cb.rooms?.(list);
+                    }
+                }
+                
+                // Room events
+                if (h === 'room_event' || h === 'conference_event' || h === 'group_event' || h === 'room' || h === 'muc') {
+                    const rm = d.room || d.name || d.conference || d.group || d.jid;
+                    
+                    // Join success
+                    if (['join_success','joined','join','enter','entered','room_joined'].includes(t)) {
+                        this._joinOk(rm || this.target);
+                    }
+                    
+                    // Members = we're in
+                    if (['members','users','member_list','user_list','occupants'].includes(t) || d.members || d.users || d.occupants) {
+                        if (this.target && !this.joinOk) this._joinOk(this.target);
+                        this.users = d.members || d.users || d.occupants || [];
+                        this.cb.users?.(this.users);
+                    }
+                    
+                    // Message
+                    if (['text','message','msg','chat'].includes(t)) {
+                        const mr = d.room || d.conference || d.group;
+                        if (mr === this.target && !this.joinOk) this._joinOk(mr);
+                        this.cb.msg?.(d.from || d.sender, d.body || d.message || d.text, mr, 'room');
+                    }
+                    
+                    // Ban
+                    if (['banned','ban','blocked'].includes(t) || this._isBan(d)) {
+                        this._ban(d);
+                    }
+                    
+                    // Kick
+                    if (['kicked','kick'].includes(t)) {
+                        this.inRoom = false;
+                        this.joinOk = false;
+                        this.cb.log?.(`[${this.user}] 👢 Kicked`);
+                    }
+                    
+                    // User join
+                    if (['user_joined','user_enter','occupant_joined'].includes(t)) {
+                        const u = d.username || d.user || d.nick;
+                        const r = d.role || d.affiliation || '';
+                        this.cb.log?.(`[${this.user}] 👤 ${u} joined (${r})`);
+                        if (u && !this.users.find(x => (x.username || x) === u)) {
+                            this.users.push({ username: u, role: r });
+                            this.cb.users?.(this.users);
+                        }
+                    }
+                    
+                    // Errors
+                    if (['error','fail','failed','join_error','not_allowed'].includes(t)) {
+                        const reason = d.reason || d.message || d.error || t;
+                        this.cb.log?.(`[${this.user}] ❌ ${reason}`);
+                        if (this._isBan(d)) this._ban(d);
+                    }
+                }
+                
+                // Private messages
+                if (['private_message','pm','direct_message','dm','message','chat'].includes(h)) {
+                    if (d.from && (d.body || d.message || d.text) && !d.room) {
+                        this.cb.msg?.(d.from, d.body || d.message || d.text, null, 'dm');
+                    }
+                }
+                
+                // Roster for DM targets
+                if (['roster','friends','contacts','buddy_list'].includes(h)) {
+                    const items = d.items || d.friends || d.contacts || d.buddies || [];
+                    if (items.length > 0) {
+                        this.cb.log?.(`[${this.user}] Roster: ${items.length} contacts`);
+                        this.cb.roster?.(items);
+                    }
+                }
+            }
+            
+            _joinOk(rm) {
+                if (this.joinOk) return;
+                this.room = rm;
+                this.inRoom = true;
+                this.joinOk = true;
+                this.banned = false;
+                this.cb.log?.(`[${this.user}] ✓ IN ROOM: ${rm}`);
+                this.cb.joined?.(rm);
+            }
+            
+            _isBan(d) {
+                const r = (d.reason || d.message || d.error || '').toLowerCase();
+                return r.includes('ban') || r.includes('block') || r.includes('forbidden');
+            }
+            
+            _ban(d) {
+                this.banned = true;
+                this.inRoom = false;
+                this.joinOk = false;
+                this.cb.log?.(`[${this.user}] 🚫 BANNED: ${d.reason || 'Banned'}`);
+                this.cb.banned?.(d.by, d.reason);
+            }
+            
+            _startPing() {
+                if (this.ping) clearInterval(this.ping);
+                this.ping = setInterval(() => {
+                    if (this.ws?.readyState === WebSocket.OPEN) this.ws.send('');
+                }, 15000);
+            }
+            
+            _login() {
+                this._send({ handler: 'login', id: this._id(), username: this.user, password: this.pass });
+            }
+            
+            // IMPROVED: Fetch rooms - tries ALL possible handlers
+            fetchRooms() {
+                const handlers = [
+                    { handler: 'room_list' },
+                    { handler: 'room_list', type: 'public' },
+                    { handler: 'get_rooms' },
+                    { handler: 'rooms' },
+                    { handler: 'list_rooms' },
+                    { handler: 'public_rooms' },
+                    { handler: 'conference_list' },
+                    { handler: 'conferences' },
+                    { handler: 'get_conferences' },
+                    { handler: 'muc_list' },
+                    { handler: 'group_list' },
+                    { handler: 'groups' },
+                    { handler: 'channels' },
+                    { handler: 'channel_list' },
+                    { handler: 'chatrooms' },
+                    { handler: 'available_rooms' },
+                    { handler: 'discover' },
+                    { handler: 'disco', type: 'rooms' },
+                    { handler: 'query', type: 'rooms' },
+                    { handler: 'search', type: 'rooms' },
+                    { handler: 'browse' },
+                    { handler: 'directory' }
+                ];
+                
+                this.cb.log?.(`[${this.user}] Testing ${handlers.length} room handlers...`);
+                
+                handlers.forEach((p, i) => {
+                    setTimeout(() => {
+                        p.id = this._id();
+                        this._send(p);
+                    }, i * 80);
+                });
+            }
+            
+            join(rm) {
+                if (this.banned) return false;
+                this.target = rm;
+                this.joinOk = false;
+                this.inRoom = false;
+                
+                // Try multiple join handlers
+                const handlers = ['room_join', 'join_room', 'conference_join', 'join_conference', 'group_join', 'enter_room', 'join', 'muc_join'];
+                
+                handlers.forEach((h, i) => {
+                    setTimeout(() => {
+                        this._send({ handler: h, id: this._id(), name: rm, room: rm });
+                    }, i * 80);
+                });
+                
+                return true;
+            }
+            
+            leave(rm) {
+                this.inRoom = false;
+                this.joinOk = false;
+                this.room = '';
+                ['room_leave', 'leave_room', 'conference_leave', 'leave'].forEach(h => {
+                    this._send({ handler: h, id: this._id(), name: rm, room: rm });
+                });
+            }
+            
+            fetchUsers() {
+                const rm = this.room || this.target;
+                ['room_users', 'get_members', 'member_list', 'users', 'occupants', 'get_occupants'].forEach(h => {
+                    this._send({ handler: h, id: this._id(), room: rm, name: rm });
+                });
+            }
+            
+            sendRoom(rm, msg) {
+                return this._send({
+                    handler: 'room_message',
+                    id: this._id(true),
+                    room: rm,
+                    type: 'text',
+                    body: msg
+                });
+            }
+            
+            // IMPROVED: Send DM - tries ALL possible handlers
+            sendDM(to, msg) {
+                const handlers = [
+                    { handler: 'private_message', to: to, body: msg, type: 'text' },
+                    { handler: 'message', to: to, body: msg, type: 'chat' },
+                    { handler: 'pm', to: to, body: msg },
+                    { handler: 'dm', to: to, body: msg },
+                    { handler: 'direct_message', to: to, body: msg },
+                    { handler: 'send_message', to: to, body: msg, type: 'private' },
+                    { handler: 'chat', to: to, body: msg },
+                    { handler: 'whisper', to: to, body: msg },
+                    // With different field names
+                    { handler: 'private_message', user: to, body: msg },
+                    { handler: 'private_message', target: to, body: msg },
+                    { handler: 'private_message', recipient: to, body: msg },
+                    { handler: 'message', user: to, body: msg, type: 'private' },
+                    { handler: 'send_pm', to: to, body: msg }
+                ];
+                
+                handlers.forEach((p, i) => {
+                    setTimeout(() => {
+                        p.id = this._id(true);
+                        this._send(p);
+                    }, i * 30);
+                });
+                
+                return true;
+            }
+            
+            _send(p) {
+                if (this.ws?.readyState === WebSocket.OPEN) {
+                    this.ws.send(JSON.stringify(p));
+                    return true;
+                }
+                return false;
+            }
+            
+            alive() { return this.ws?.readyState === WebSocket.OPEN && this.connected; }
+            canSend() { return this.alive() && !this.banned; }
+            
+            _id(m = false) {
+                const c = m ? 'abcdefghijklmnopqrstuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ' : 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let s = '';
+                for (let i = 0; i < 20; i++) s += c[Math.floor(Math.random() * c.length)];
+                return s;
+            }
+        }
+
+        // ========== APP ==========
+        const $ = id => document.getElementById(id);
+        
+        let clients = new Map();
+        let connected = new Set();
+        let inRoom = new Set();
+        let activeRoom = '';
+        let roomUsers = [];
+        let targetUsers = []; // All users in list
+        let selectedUsers = new Set(); // Selected for DM
+        let msgLoop = null;
+        let dmLoopInt = null;
+        let joining = false;
+        let stopJoin = false;
+        let stopDM = false;
+        let debug = true;
+        
+        const keepAlive = new KeepAlive();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setup();
+            checkIP();
+            setupTabs();
+        });
+
+        function setupTabs() {
+            document.querySelectorAll('.tab').forEach(t => {
+                t.onclick = () => {
+                    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+                    t.classList.add('active');
+                    $(t.dataset.tab).classList.add('active');
+                };
+            });
+        }
+
+        function setup() {
+            $('btnBg').onclick = enableBg;
+            $('btnIP').onclick = checkIP;
+            $('debugMode').onchange = () => { debug = $('debugMode').checked; };
+            
+            $('btnConnect').onclick = connectIds;
+            $('btnDisconnect').onclick = disconnectAll;
+            
+            $('btnFetchRooms').onclick = fetchRooms;
+            $('btnJoin').onclick = joinRoom;
+            $('btnStopJoin').onclick = () => { stopJoin = true; };
+            $('btnLeave').onclick = leaveRoom;
+            
+            $('roomSelect').onchange = () => { $('roomName').value = $('roomSelect').value; };
+            
+            $('btnStartMsg').onclick = startMsgLoop;
+            $('btnStopMsg').onclick = stopMsgLoop;
+            
+            // DM
+            $('btnFetchUsers').onclick = fetchFromRoom;
+            $('btnAddTargets').onclick = addTargetsFromInput;
+            $('btnClearTargets').onclick = clearTargets;
+            $('btnSelectAll').onclick = selectAllTargets;
+            $('btnSendDM').onclick = startDMLoop;
+            $('btnStopDM').onclick = () => { stopDM = true; };
+            
+            $('btnClear').onclick = () => { $('logBox').innerHTML = '<p class="info">Cleared</p>'; };
+            $('btnExport').onclick = exportLog;
+        }
+
+        async function checkIP() {
+            try {
+                const r = await fetch('https://api.ipify.org?format=json');
+                const d = await r.json();
+                log(`IP: ${d.ip}`, 'info');
+            } catch(e) {
+                log('Could not check IP', 'warning');
+            }
+        }
+
+        function enableBg() {
+            if (keepAlive.start(() => {
+                $('lastPing').textContent = new Date().toLocaleTimeString();
+                clients.forEach(c => c.alive() && c.ws.send(''));
+            })) {
+                $('btnBg').textContent = '✓ Active';
+                $('btnBg').disabled = true;
+                $('bgStatus').classList.remove('hidden');
+                log('Background mode enabled', 'success');
+            }
+        }
+
+        function createClient(user, pass) {
+            return new Promise(resolve => {
+                const url = $('serverUrl').value;
+                const timeout = setTimeout(() => resolve({ user, ok: false }), 20000);
+                
+                const cb = {
+                    log: msg => log(msg),
+                    raw: (u, raw) => { if (debug) log(`[RAW] ${raw}`, 'raw'); },
+                    login: () => {
+                        clearTimeout(timeout);
+                        connected.add(user);
+                        updateUI();
+                        updateTag(user, 'ok');
+                        resolve({ user, ok: true });
+                    },
+                    fail: () => {
+                        clearTimeout(timeout);
+                        updateTag(user, 'fail');
+                        resolve({ user, ok: false });
+                    },
+                    dc: manual => {
+                        if (!manual) {
+                            connected.delete(user);
+                            inRoom.delete(user);
+                            updateUI();
+                        }
+                    },
+                    msg: (from, text, room, type) => {
+                        addChat(from, text, room, type);
+                        // Auto-confirm join if message received
+                        const c = clients.get(user);
+                        if (c && room === c.target && !c.joinOk) {
+                            c.joinOk = true;
+                            c.inRoom = true;
+                            inRoom.add(user);
+                            updateTag(user, 'in-room');
+                            updateRoomUI();
+                        }
+                    },
+                    rooms: list => updateRoomList(list),
+                    users: users => {
+                        roomUsers = users;
+                        log(`Room has ${users.length} users`, 'info');
+                    },
+                    joined: rm => {
+                        inRoom.add(user);
+                        updateTag(user, 'in-room');
+                        updateRoomUI();
+                        activeRoom = rm;
+                    },
+                    banned: () => {
+                        inRoom.delete(user);
+                        updateTag(user, 'banned');
+                        updateRoomUI();
+                    },
+                    roster: items => {
+                        log(`Roster: ${items.length} items`, 'info');
+                    }
+                };
+                
+                const client = new Client(user, pass, url, cb);
+                clients.set(user, client);
+            });
+        }
+
+        function updateTag(user, state) {
+            const tag = $(`tag-${user}`);
+            if (!tag) return;
+            tag.className = 'tag';
+            let icon = '✓';
+            switch(state) {
+                case 'connecting': tag.classList.add('connecting'); icon = '⏳'; break;
+                case 'fail': tag.classList.add('failed'); icon = '❌'; break;
+                case 'banned': tag.classList.add('banned'); icon = '🚫'; break;
+                case 'in-room': tag.classList.add('in-room'); icon = '🏠'; break;
+            }
+            tag.textContent = `${icon} ${user}`;
+        }
+
+        function updateUI() {
+            $('connCnt').textContent = connected.size;
+            $('connInd').className = `indicator ${connected.size > 0 ? 'on' : 'off'}`;
+            $('btnDisconnect').disabled = connected.size === 0;
+            $('btnFetchRooms').disabled = connected.size === 0;
+            $('btnJoin').disabled = connected.size === 0;
+            $('btnFetchUsers').disabled = connected.size === 0;
+            updateDMButton();
+        }
+
+        function updateRoomUI() {
+            $('roomCnt').textContent = inRoom.size;
+            $('inRoomCnt').textContent = inRoom.size;
+            $('btnLeave').disabled = inRoom.size === 0;
+            $('btnStartMsg').disabled = inRoom.size === 0;
+            
+            if (activeRoom) {
+                $('curRoom').textContent = activeRoom;
+                $('roomStatus').classList.remove('hidden');
+            }
+        }
+
+        function updateDMButton() {
+            $('btnSendDM').disabled = connected.size === 0 || selectedUsers.size === 0;
+        }
+
+        async function connectIds() {
+            const ids = $('inputIds').value.split('#').map(s => s.trim()).filter(s => s);
+            const pass = $('inputPass').value.trim();
+            
+            if (!ids.length || !pass) { log('Enter IDs and password', 'error'); return; }
+            
+            if (!keepAlive.active) enableBg();
+            
+            const delay = parseInt($('connDelay').value) || 2000;
+            
+            $('btnConnect').disabled = true;
+            $('idTags').innerHTML = '';
+            
+            ids.forEach(id => {
+                const tag = document.createElement('span');
+                tag.className = 'tag connecting';
+                tag.id = `tag-${id}`;
+                tag.textContent = `⏳ ${id}`;
+                $('idTags').appendChild(tag);
+            });
+            
+            log(`Connecting ${ids.length} IDs...`, 'info');
+            
+            for (const id of ids) {
+                await createClient(id, pass);
+                await sleep(delay);
+            }
+            
+            log(`Done. ${connected.size} connected`, 'success');
+            $('btnConnect').disabled = false;
+        }
+
+        function disconnectAll() {
+            stopMsgLoop();
+            stopDMLoop();
+            stopJoin = true;
+            
+            clients.forEach(c => c.disconnect());
+            clients.clear();
+            connected.clear();
+            inRoom.clear();
+            activeRoom = '';
+            
+            updateUI();
+            updateRoomUI();
+            $('idTags').innerHTML = '';
+            $('roomStatus').classList.add('hidden');
+            $('joinProg').classList.add('hidden');
+            
+            log('Disconnected', 'info');
+        }
+
+        function fetchRooms() {
+            if (connected.size === 0) return;
+            log('Fetching rooms...', 'info');
+            clients.forEach(c => { if (c.alive()) c.fetchRooms(); });
+        }
+
+        function updateRoomList(list) {
+            $('roomSelect').innerHTML = '';
+            
+            if (!list.length) {
+                $('roomSelect').innerHTML = '<option disabled>No rooms</option>';
+                return;
+            }
+            
+            list.forEach(r => {
+                const name = typeof r === 'string' ? r : (r.name || r.room || r.jid || r.id || '');
+                if (name) {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    $('roomSelect').appendChild(opt);
+                }
+            });
+            
+            log(`Found ${list.length} rooms`, 'success');
+        }
+
+        async function joinRoom() {
+            const rm = $('roomName').value.trim();
+            if (!rm) { log('Enter room name', 'error'); return; }
+            if (connected.size === 0) { log('Connect first', 'error'); return; }
+            if (joining) return;
+            
+            joining = true;
+            stopJoin = false;
+            
+            const delay = parseInt($('joinDelay').value) || 5000;
+            
+            $('btnJoin').disabled = true;
+            $('btnStopJoin').classList.remove('hidden');
+            
+            activeRoom = rm;
+            $('curRoom').textContent = rm;
+            $('roomStatus').classList.remove('hidden');
+            
+            $('joinProg').classList.remove('hidden');
+            $('joinProg').innerHTML = '';
+            
+            log(`Joining ${rm}...`, 'info');
+            
+            const arr = Array.from(clients.entries());
+            
+            for (let i = 0; i < arr.length; i++) {
+                if (stopJoin) break;
+                
+                const [user, client] = arr[i];
+                
+                addProg(user, '⏳', 'Joining...');
+                
+                if (!client.alive()) {
+                    updProg(user, '❌', 'Offline');
+                    continue;
+                }
+                
+                if (client.banned && $('autoDevice').checked) {
+                    client.newDev();
+                    log(`[${user}] New device`, 'warning');
+                }
+                
+                client.join(rm);
+                
+                const result = await waitJoin(user, 8000);
+                
+                if (result.ok) {
+                    updProg(user, '✓', 'OK');
+                    inRoom.add(user);
+                } else if (result.banned) {
+                    updProg(user, '🚫', 'Banned');
+                } else {
+                    // Assume success
+                    client.inRoom = true;
+                    client.joinOk = true;
+                    inRoom.add(user);
+                    updProg(user, '✓', 'OK (assumed)');
+                }
+                
+                updateRoomUI();
+                
+                if (i < arr.length - 1 && !stopJoin) await sleep(delay);
+            }
+            
+            joining = false;
+            $('btnJoin').disabled = false;
+            $('btnStopJoin').classList.add('hidden');
+            
+            log(`Join done. ${inRoom.size} in room`, 'success');
+        }
+
+        function addProg(user, icon, txt) {
+            const p = document.createElement('p');
+            p.id = `prog-${user}`;
+            p.className = 'info';
+            p.textContent = `${icon} ${user}: ${txt}`;
+            $('joinProg').appendChild(p);
+        }
+
+        function updProg(user, icon, txt) {
+            const p = $(`prog-${user}`);
+            if (p) {
+                p.textContent = `${icon} ${user}: ${txt}`;
+                p.className = icon === '✓' ? 'success' : (icon === '🚫' ? 'ban' : 'warning');
+            }
+        }
+
+        function waitJoin(user, timeout) {
+            return new Promise(resolve => {
+                const c = clients.get(user);
+                if (!c) { resolve({ ok: false }); return; }
+                
+                const start = Date.now();
+                const check = setInterval(() => {
+                    if (c.joinOk || c.inRoom) {
+                        clearInterval(check);
+                        resolve({ ok: true });
+                    } else if (c.banned) {
+                        clearInterval(check);
+                        resolve({ ok: false, banned: true });
+                    } else if (Date.now() - start > timeout) {
+                        clearInterval(check);
+                        resolve({ ok: false });
+                    }
+                }, 300);
+            });
+        }
+
+        function leaveRoom() {
+            if (!activeRoom) return;
+            stopMsgLoop();
+            
+            clients.forEach(c => c.alive() && c.leave(activeRoom));
+            inRoom.clear();
+            updateRoomUI();
+            
+            $('roomStatus').classList.add('hidden');
+            $('joinProg').classList.add('hidden');
+            
+            log(`Left ${activeRoom}`, 'info');
+            activeRoom = '';
+        }
+
+        // ========== ROOM MESSAGES ==========
+        function startMsgLoop() {
+            const msgs = $('roomMsgs').value.split('\n').filter(m => m.trim());
+            if (!msgs.length) { log('Enter messages', 'error'); return; }
+            if (!activeRoom) { log('Join a room first', 'error'); return; }
+            
+            const int = Math.max(500, parseInt($('msgInt').value) || 3000);
+            let idx = 0;
+            let cnt = 0;
+            
+            const send = () => {
+                const msg = msgs[idx % msgs.length];
+                let sent = 0;
+                
+                clients.forEach(c => {
+                    if (c.canSend() && (c.inRoom || c.joinOk || inRoom.has(c.user))) {
+                        c.sendRoom(activeRoom, msg);
+                        sent++;
+                    }
+                });
+                
+                if (sent > 0) {
+                    cnt++;
+                    $('msgCnt').textContent = cnt;
+                }
+                idx++;
+            };
+            
+            send();
+            msgLoop = setInterval(send, int);
+            
+            $('btnStartMsg').disabled = true;
+            $('btnStopMsg').disabled = false;
+            $('msgStatus').classList.remove('hidden');
+            $('msgLoop').textContent = 'Sending...';
+            $('msgLoop').classList.add('sending');
+            
+            log(`Started: ${msgs.length} msgs, ${int}ms`, 'success');
+        }
+
+        function stopMsgLoop() {
+            if (msgLoop) clearInterval(msgLoop);
+            msgLoop = null;
+            
+            $('btnStartMsg').disabled = false;
+            $('btnStopMsg').disabled = true;
+            $('msgLoop').textContent = 'Stopped';
+            $('msgLoop').classList.remove('sending');
+        }
+
+        // ========== DM FUNCTIONS ==========
+        function addTargetsFromInput() {
+            const text = $('dmInput').value.trim();
+            if (!text) return;
+            
+            const users = text.split(/[#\n]/).map(s => s.trim()).filter(s => s);
+            users.forEach(u => {
+                if (!targetUsers.includes(u)) {
+                    targetUsers.push(u);
+                }
+            });
+            
+            updateTargetList();
+            $('dmInput').value = '';
+            log(`Added ${users.length} users`, 'success');
+        }
+
+        function fetchFromRoom() {
+            if (roomUsers.length > 0) {
+                const others = roomUsers.map(u => u.username || u.nick || u).filter(u => u && !connected.has(u));
+                others.forEach(u => {
+                    if (!targetUsers.includes(u)) {
+                        targetUsers.push(u);
+                    }
+                });
+                updateTargetList();
+                log(`Added ${others.length} users from room`, 'success');
+            } else {
+                clients.forEach(c => c.alive() && c.fetchUsers());
+                log('Fetching room users...', 'info');
+            }
+        }
+
+        function clearTargets() {
+            targetUsers = [];
+            selectedUsers.clear();
+            updateTargetList();
+        }
+
+        function selectAllTargets() {
+            if (selectedUsers.size === targetUsers.length) {
+                // Deselect all
+                selectedUsers.clear();
+            } else {
+                // Select all
+                targetUsers.forEach(u => selectedUsers.add(u));
+            }
+            updateTargetList();
+        }
+
+        function updateTargetList() {
+            $('totalCnt').textContent = targetUsers.length;
+            $('selectedCnt').textContent = selectedUsers.size;
+            
+            if (!targetUsers.length) {
+                $('userList').innerHTML = '<p style="color:#555;text-align:center;font-size:0.8rem">No users</p>';
+                updateDMButton();
+                return;
+            }
+            
+            $('userList').innerHTML = targetUsers.map(u => `
+                <div class="user-item ${selectedUsers.has(u) ? 'selected' : ''}" onclick="toggleUser('${u}')">
+                    <input type="checkbox" ${selectedUsers.has(u) ? 'checked' : ''} onclick="event.stopPropagation(); toggleUser('${u}')">
+                    <span>${u}</span>
+                </div>
+            `).join('');
+            
+            updateDMButton();
+        }
+
+        window.toggleUser = function(u) {
+            if (selectedUsers.has(u)) {
+                selectedUsers.delete(u);
+            } else {
+                selectedUsers.add(u);
+            }
+            updateTargetList();
+        };
+
+        async function startDMLoop() {
+            if (selectedUsers.size === 0) { log('Select users to DM', 'error'); return; }
+            
+            const msg = $('dmMsg').value.trim();
+            if (!msg) { log('Enter a message', 'error'); return; }
+            if (connected.size === 0) { log('Connect first', 'error'); return; }
+            
+            const isLoop = $('dmLoop').checked;
+            stopDM = false;
+            
+            const delay = parseInt($('dmDelay').value) || 2000;
+            let cnt = 0;
+            
+            $('btnSendDM').disabled = true;
+            $('btnStopDM').classList.remove('hidden');
+            $('dmStatus').classList.remove('hidden');
+            $('dmLoop2').textContent = 'Sending...';
+            $('dmLoop2').classList.add('sending');
+            
+            // Get sender client
+            let sender = null;
+            clients.forEach(c => { if (c.alive() && !sender) sender = c; });
+            
+            if (!sender) {
+                log('No client available', 'error');
+                stopDMLoop();
+                return;
+            }
+            
+            const targets = Array.from(selectedUsers);
+            log(`Sending DM to ${targets.length} users${isLoop ? ' (loop)' : ''}...`, 'info');
+            
+            do {
+                for (const target of targets) {
+                    if (stopDM) break;
+                    
+                    sender.sendDM(target, msg);
+                    cnt++;
+                    $('dmCnt').textContent = cnt;
+                    log(`📨 DM → ${target}`, 'dm');
+                    
+                    await sleep(delay);
+                }
+            } while (isLoop && !stopDM);
+            
+            log(`DM done. Sent: ${cnt}`, 'success');
+            stopDMLoop();
+        }
+
+        function stopDMLoop() {
+            stopDM = true;
+            $('btnSendDM').disabled = false;
+            $('btnStopDM').classList.add('hidden');
+            $('dmLoop2').textContent = 'Stopped';
+            $('dmLoop2').classList.remove('sending');
+            updateDMButton();
+        }
+
+        // ========== CHAT & LOG ==========
+        function addChat(from, text, room, type) {
+            const box = $('chatBox');
+            if (box.querySelector('p[style]')) box.innerHTML = '';
+            
+            const own = connected.has(from);
+            const dm = type === 'dm';
+            
+            const div = document.createElement('div');
+            div.className = `msg ${own ? 'own' : ''} ${dm ? 'dm' : ''}`;
+            div.innerHTML = `
+                <div class="from">${from}${dm ? ' (DM)' : room ? ` in ${room}` : ''}</div>
+                <div class="text">${esc(text)}</div>
+                <div class="time">${new Date().toLocaleTimeString()}</div>
+            `;
+            
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+            while (box.children.length > 100) box.removeChild(box.firstChild);
+        }
+
+        function log(msg, type = 'info') {
+            const p = document.createElement('p');
+            p.className = type;
+            p.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            $('logBox').appendChild(p);
+            $('logBox').scrollTop = $('logBox').scrollHeight;
+            while ($('logBox').children.length > 500) $('logBox').removeChild($('logBox').firstChild);
+        }
+
+        function exportLog() {
+            const logs = [];
+            $('logBox').querySelectorAll('p').forEach(p => logs.push(p.textContent));
+            const blob = new Blob([logs.join('\n')], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `log-${new Date().toISOString().slice(0,10)}.txt`;
+            a.click();
+        }
+
+        function esc(t) {
+            const d = document.createElement('div');
+            d.textContent = t;
+            return d.innerHTML;
+        }
+
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+    </script>
+</body>
+</html>
